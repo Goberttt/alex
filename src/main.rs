@@ -85,7 +85,7 @@ fn main() {
                     None => {println!("New board created!");current_board = Board::new();},
                     Some(s) => match Board::from(s.as_str()) {
                         Ok(b) => {println!("New board created!");current_board = b;},
-                        Err(e) => println!("Invalid input!"),
+                        Err(_) => println!("Invalid input!"),
                     },
                 }
                 state = Await;
