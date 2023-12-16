@@ -18,14 +18,6 @@ use enums::IoState::*;
 
 mod graph;
 
-
-
-
-
-
-
-
-
 fn main() {
     let mut state = Hello;
     let mut input = None;
@@ -33,7 +25,7 @@ fn main() {
     loop {
         match state {
             Hello => {
-                println!("Hi! :D Please enter a command. Type help for help");
+                println!("\n\n\n    Hi! :D Please enter a command. Type help for help");
                 state = Await;
                 input = None;
             },
@@ -46,17 +38,18 @@ fn main() {
                     (Some(s), None) => match s.as_str() {
                         "help" | "h" => state = Help(None),
                         "new" | "n" => state = NewBoard,
-                        "move" | "m" => println!("Please enter the moves after the move command."),
+                        "move" | "m" => println!("    Please enter the moves after the move command."),
                         "show" | "s" => state = ShowBoard,
                         "exit" | "end" | "quit" => break,
-                        _ => println!("Unknown command."),
+                        "debug" => println!("{}", current_board.game_graph.dist_to_goal([&1,&0,&0], current_board.players[0], 8).unwrap()),
+                        _ => println!("    Unknown command."),
                         },
                     (Some(s), Some(i)) => match s.as_str() {
                             "help" | "h" => state = Help(Some((*i.clone()).to_string())),
                             "new" | "n" => {state = NewBoard; input = Some(i.clone())},
                             "move" | "m" => {state = PlayMoves; input = Some(i.clone())},
-                            "show" | "s" => println!("Please type nothing after show."),
-                            _ => println!("Unknown command."),
+                            "show" | "s" => println!("    Please type nothing after show."),
+                            _ => println!("    Unknown command."),
                         },
                     _ => (),
                 };
@@ -64,10 +57,10 @@ fn main() {
             Help(s) => {help(&s); state = Await; input = None;},
             NewBoard => {
                 match input {
-                    None => {println!("New board created!");current_board = Board::new();},
+                    None => {println!("    New board created!");current_board = Board::new();},
                     Some(s) => match Board::from(s.as_str()) {
-                        Ok(b) => {println!("New board created!");current_board = b;},
-                        Err(_) => println!("Invalid input!"),
+                        Ok(b) => {println!("    New board created!");current_board = b;},
+                        Err(_) => println!("    Invalid input!"),
                     },
                 }
                 state = Await;
@@ -75,8 +68,8 @@ fn main() {
             },
             PlayMoves => {
                 match current_board.extend(input.unwrap().as_str()) {
-                    Ok(()) => { println!("Board updated! Player {} to move,", current_board.to_move+1); state = ShowBoard },
-                    Err(e) => { println!("{e}"); state = Await },
+                    Ok(()) => { println!("    Board updated! Player {} to move,", current_board.to_move+1); state = ShowBoard },
+                    Err(e) => { println!("    {e}"); state = Await },
                 };
                 input = None;
             },

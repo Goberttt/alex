@@ -50,6 +50,7 @@ impl Board {
         }
         if self.to_move == 0 {self.to_move = 1} else {self.to_move = 0};
     }
+
     pub fn from(s: &str) -> Result<Board, String> {
         let mut b = Board::new();
         match b.extend(s) {
@@ -184,7 +185,7 @@ impl Board {
                 Ok(mv) => {
                     match self.check_move(&mv, tm) {
                     Ok(()) => (),
-                    Err(s) => return Err(format!("Move {} ( {} ) is illegal, because: {}. The board was not changed.", i+1, m, s)),
+                    Err(s) => return Err(format!("Move {} ( {} ) is illegal, because: {}.\n    The board was not changed.", i+1, m, s)),
                     };
                     moves.push(mv);
                 }

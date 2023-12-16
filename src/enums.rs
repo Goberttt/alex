@@ -18,7 +18,5 @@ pub enum IoState{
     Help(Option<String>),
     NewBoard,
     PlayMoves,
-//  ApplyMove(Move),
     ShowBoard,
-//  ShowCustom(Vec<[usize; 2]>, [[[Color; 8]; 8]; 2], [[Color; 9]; 9]),
 }

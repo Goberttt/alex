@@ -1,10 +1,5 @@
 use std::collections::HashSet;
 
-
-enum Direction {
-	N,E,W,S,
-}
-
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Debug)]
 struct Tile {
 	pos: [usize; 2],
@@ -13,7 +8,6 @@ struct Tile {
 
 pub struct Graph {
 	vertices: [[Tile; 9]; 9],
-	paths: Vec<Vec<Vec<Direction>>>,
 }
 
 impl Tile {
@@ -47,7 +41,7 @@ impl Default for Graph {
 			}
 		};
 		
-		Graph{ vertices: v, paths: vec![vec![vec![]]] }
+		Graph{ vertices: v }
 	}
 }
 
@@ -62,8 +56,8 @@ impl Graph {
 			},
 			1 => { //vertival
 				self.vertices[x][y].neighboors[1] = false;
-				self.vertices[x+1][y].neighboors[1] = false;
-				self.vertices[x][y+1].neighboors[3] = false;
+				self.vertices[x+1][y].neighboors[3] = false;
+				self.vertices[x][y+1].neighboors[1] = false;
 				self.vertices[x+1][y+1].neighboors[3] = false;
 			},
 			_ => () //cannot happen
@@ -79,8 +73,8 @@ impl Graph {
 			},
 			1 => { //vertival
 				self.vertices[x][y].neighboors[1] = true;
-				self.vertices[x+1][y].neighboors[1] = true;
-				self.vertices[x][y+1].neighboors[3] = true;
+				self.vertices[x+1][y].neighboors[3] = true;
+				self.vertices[x][y+1].neighboors[1] = true;
 				self.vertices[x+1][y+1].neighboors[3] = true;
 			},
 			_ => () //cannot happen
@@ -88,6 +82,7 @@ impl Graph {
 	}
 	pub fn dist_to_goal(&mut self, [i, x, y]: [&usize; 3], [a, b]: [usize; 2], g: usize) -> Option<usize> {
 		//returns the distance to goal g from position [b, a] with extra wall [i, x, y]
+		//simple bfs
 		let mut front = vec![self.vertices[a][b]];
 		let mut found = HashSet::new();
 		let mut new_front = Vec::new();
