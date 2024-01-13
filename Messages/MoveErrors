@@ -1,0 +1,9 @@
+EdgeOfBoard: Cannot move or jump, edge of board
+BlockedByWall: Cannot move or jump, blocked by wall
+BlockedByOpponent: Cannot move, blocked by opponent
+OpponentNotThere: Cannot jump, opponent not there
+SpaceBehindFree: Cannot jump diagonaly, space behind opponent is free
+NoWallsLeft: Cannot place wall, no walls left
+SpaceOccupied: Cannot place wall, space is occupied
+P1NoPath: Cannot place wall, player 1 has no path to goal
+P2NoPath: Cannot place wall, player 2 has no path to goal
