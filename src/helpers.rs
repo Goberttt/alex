@@ -1,69 +1,191 @@
+use crate::enums::{ Notation, IoState, Flag, ParseError, HelpMessage };
+use crate::enums::Notation::*;
+use crate::enums::IoState::*;
+use crate::enums::Flag::*;
+use crate::enums::ParseError::*;
+
 use std::io;
+use std::collections::HashMap;
 
 pub mod move_conversions {
-
+	use crate::enums::ParseError;
+	use crate::enums::ParseError::*;
 	use crate::enums::Move;
+	use crate::enums::Move::*;
+	use crate::enums::Notation;
+	use crate::enums::Notation::*;
 
-	pub fn move_from_str(s: &str) -> Result<Move, String> {
-		match s {
-			"N"  => return Ok(Move::Step(1) ),
-			"E"  => return Ok(Move::Step(2) ),
-			"S"  => return Ok(Move::Step(3) ),
-			"W"  => return Ok(Move::Step(4) ),
-			"NN" => return Ok(Move::Step(11)),
-			"NE" => return Ok(Move::Step(12)),
-			"NW" => return Ok(Move::Step(14)),
-			"EN" => return Ok(Move::Step(21)),
-			"EE" => return Ok(Move::Step(22)),
-			"ES" => return Ok(Move::Step(23)),
-			"WN" => return Ok(Move::Step(41)),
-			"WS" => return Ok(Move::Step(43)),
-			"WW" => return Ok(Move::Step(44)),
-			"SS" => return Ok(Move::Step(33)),
-			"SE" => return Ok(Move::Step(32)),
-			"SW" => return Ok(Move::Step(34)),
-			_ => (),
+	pub fn move_from_str(s: &str, [a, b]: [usize; 2], [m, n]: [usize; 2], notation: Notation) -> Result<Move, ParseError> {
+	//a, b is current players position
+	//m, n is other players position
+		match notation {
+			Relative => {
+				match s {
+					"N"  => return Ok(Step(1) ),
+					"E"  => return Ok(Step(2) ),
+					"S"  => return Ok(Step(3) ),
+					"W"  => return Ok(Step(4) ),
+					"NN" => return Ok(Step(11)),
+					"NE" => return Ok(Step(12)),
+					"NW" => return Ok(Step(14)),
+					"EN" => return Ok(Step(21)),
+					"EE" => return Ok(Step(22)),
+					"ES" => return Ok(Step(23)),
+					"WN" => return Ok(Step(41)),
+					"WS" => return Ok(Step(43)),
+					"WW" => return Ok(Step(44)),
+					"SS" => return Ok(Step(33)),
+					"SE" => return Ok(Step(32)),
+					"SW" => return Ok(Step(34)),
+					_ => (),
+				}
+
+				let (i, x, y);
+				match s.chars().nth(0) {
+					Some(c) => match c {
+						'H' => i = 0,
+						'V' => i = 1,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match s.chars().nth(1) {
+					Some(c) => match c {
+						'a' => x = 0,
+						'b' => x = 1,
+						'c' => x = 2,
+						'd' => x = 3,
+						'e' => x = 4,
+						'f' => x = 5,
+						'g' => x = 6,
+						'h' => x = 7,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match s.chars().nth(2) {
+					Some(c) => match c {
+						'1' => y = 0,
+						'2' => y = 1,
+						'3' => y = 2,
+						'4' => y = 3,
+						'5' => y = 4,
+						'6' => y = 5,
+						'7' => y = 6,
+						'8' => y = 7,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				Ok(Move::Wall([i, x, y]))
+			},
+			Absolute => {
+				let (x, y);
+				match s.chars().nth(0) {
+					Some(c) => match c {
+						'a' => x = 0,
+						'b' => x = 1,
+						'c' => x = 2,
+						'd' => x = 3,
+						'e' => x = 4,
+						'f' => x = 5,
+						'g' => x = 6,
+						'h' => x = 7,
+						'i' => x = 8,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match s.chars().nth(1) {
+					Some(c) => match c {
+						'1' => y = 0,
+						'2' => y = 1,
+						'3' => y = 2,
+						'4' => y = 3,
+						'5' => y = 4,
+						'6' => y = 5,
+						'7' => y = 6,
+						'8' => y = 7,
+						'9' => y = 8,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match (x-(a as isize), y-(b as isize)) {
+					(0,1)  => return Ok(Step(1) ),
+					(1,0)  => return Ok(Step(2) ),
+					(0,-1) => return Ok(Step(3) ),
+					(-1,0) => return Ok(Step(4) ),
+					(0,2)  => return Ok(Step(11)),
+					(2,0)  => return Ok(Step(22)),
+					(0,-2) => return Ok(Step(33)),
+					(-2,0) => return Ok(Step(44)),
+					(1,1) => {
+						match ((m as isize)-(a as isize), (n as isize)-(b as isize)) {
+							(1,0) => return Ok(Step(12)),
+							_ => return Ok(Step(21)),
+						}
+					},
+					(1,-1) => {
+						match ((m as isize)-(a as isize), (n as isize)-(b as isize)) {
+							(1,0) => return Ok(Step(14)),
+							_ => return Ok(Step(41)),
+						}
+					},
+					(-1,1) => {
+						match ((m as isize)-(a as isize), (n as isize)-(b as isize)) {
+							(-1,0) => return Ok(Step(41)),
+							_ => return Ok(Step(14)),
+						}
+					},
+					(-1,-1) => {
+						match ((m as isize)-(a as isize), (n as isize)-(b as isize)) {
+							(-1,0) => return Ok(Step(42)),
+							_ => return Ok(Step(24)),
+						}
+					},
+					_ => (),
+				};
+				let (i, x, y);
+				match s.chars().nth(3) {
+					Some(c) => match c {
+						'h' => i = 0,
+						'v' => i = 1,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match s.chars().nth(1) {
+					Some(c) => match c {
+						'a' => x = 0,
+						'b' => x = 1,
+						'c' => x = 2,
+						'd' => x = 3,
+						'e' => x = 4,
+						'f' => x = 5,
+						'g' => x = 6,
+						'h' => x = 7,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				match s.chars().nth(2) {
+					Some(c) => match c {
+						'1' => y = 0,
+						'2' => y = 1,
+						'3' => y = 2,
+						'4' => y = 3,
+						'5' => y = 4,
+						'6' => y = 5,
+						'7' => y = 6,
+						'8' => y = 7,
+						_ => return Err(InvalidMove),
+					},
+					None => return Err(InvalidMove),
+				};
+				Ok(Move::Wall([i, x, y]))
+			}
 		}
-		let i;
-		let x;
-		let y;
-		match s.chars().nth(0) {
-			Some(c) => match c {
-				'H' => i = 0,
-				'V' => i = 1,
-				_ => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-			},
-			None => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-		};
-		match s.chars().nth(1) {
-			Some(c) => match c {
-				'a' => x = 0,
-				'b' => x = 1,
-				'c' => x = 2,
-				'd' => x = 3,
-				'e' => x = 4,
-				'f' => x = 5,
-				'g' => x = 6,
-				'h' => x = 7,
-				_ => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-			},
-			None => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-		};
-		match s.chars().nth(2) {
-			Some(c) => match c {
-				'1' => y = 0,
-				'2' => y = 1,
-				'3' => y = 2,
-				'4' => y = 3,
-				'5' => y = 4,
-				'6' => y = 5,
-				'7' => y = 6,
-				'8' => y = 7,
-				_ => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-			},
-			None => return Err(format!("{} is not a valid move. Type help encoding for help.", s)),
-		};
-		Ok(Move::Wall([i, x, y]))
 	}
 
 	pub fn string_from_move(mv: &Move) -> String {
@@ -113,35 +235,78 @@ pub mod move_conversions {
 }
 
 
-pub fn help(s: &Option<String>) {
+pub fn help(s: &Option<String>, help_texts: &HashMap<HelpMessage, String>) {
     match s {
-        None => println!{"The following commands are supported:
-help, new, move, show and exit. Type help <command> to receive help about a command.
-Type help encoding to see help about the move encoding."},
+        None => println!{"    {}", help_texts.get(&HelpMessage::General).unwrap()},
         Some(c) => match c.as_str() {
-            "help" => println!("Type help <command> to receive help about a command.
-Example: >> help new.
-Type help encoding to see help about the move encoding."),
-            "new" => println!("Resets the board.
-This command can be followed by a valid move sequence like this: >> new S N S N."),
-            "move" => println!("Must be followed by a valid move sequence.
-Applies this move sequence to the current board.
-Example: >> move S N Hd3."),
-            "show" => println!("Prints the current board."),
-            "exit" => println!("Exits the application."),
-            "encoding" => println!("The moves are encoded as follows:
-Moving the pawn is encoded by cardinal directions, i.e. N, E, S, W.
-A jump is encoded by two consequtive such directions, like NN or NW for a sideways jump.
-Walls are encoded by H and V standing for horizontal and vertical.
-This is followed by the coordinates of the center of the wall, like this: Hd3 He7 Va1 Vb5."),
-            _ => {println!("I'm sorry, I don't understand the input."); help(&None);},
+            "help" => println!("    {}", help_texts.get(&HelpMessage::General).unwrap()),
+            "new" => println!("    {}", help_texts.get(&HelpMessage::New).unwrap()),
+            "move" => println!("    {}", help_texts.get(&HelpMessage::Move).unwrap()),
+            "show" => println!("    {}", help_texts.get(&HelpMessage::Show).unwrap()),
+            "encoding" => println!("    {}", help_texts.get(&HelpMessage::Encoding).unwrap()),
+            "brute" => println!("    {}", help_texts.get(&HelpMessage::Brute).unwrap()),
+            "set" => println!("    {}", help_texts.get(&HelpMessage::Set).unwrap()),
+            "unset" => println!("    {}", help_texts.get(&HelpMessage::Unset).unwrap()),
+            _ => println!("    {}", help_texts.get(&HelpMessage::WrongInput).unwrap()),
         }
     }
 }
 
-pub fn get_input() -> Vec<String> {
+fn _get_input() -> Vec<String> {
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("Failed to read input. Please only enter valid UTF-8.");
     input.trim().splitn(2, " ").map(|x| x.to_string()).collect()
 }
 
+pub fn get_and_parse_input() -> Result<IoState, ParseError> {
+    let new = _get_input();
+
+    //parse the input and set the variables
+
+    match (new.get(0), new.get(1)) {
+        (Some(s), None) => match s.as_str() {
+            "help" | "h" => return Ok(Help(None)),
+            "new" | "n" => return Ok(NewBoard(None)),
+            "move" | "m" => return Err(NoMovesGiven),
+            "_move_no_check" | "_mnc" => return Err(NoMovesGiven),
+            "show" | "s" => return Ok(ShowBoard),
+            "exit" | "end" | "quit" => return Ok(Quit),
+            "set" => return Err(NoFlagGiven),
+            "unset" => return Err(NoFlagGiven),
+            "notation" => return Err(NoNotationGiven),
+            "brute" | "b" => return Ok(Brute),
+            "_fill" => return Err(NoFillChordsGiven),
+            _ => return Err(UnknownCommand),
+            },
+        (Some(s), Some(i)) => match s.as_str() {
+                "help" | "h" => return Ok(Help(Some((*i.clone()).to_string()))),
+                "new" | "n" => return Ok(NewBoard(Some(i.clone()))),
+                "move" | "m" => return Ok(PlayMoves(i.clone())),
+                "_move_no_check" | "_mnc" => return Ok(PlayMovesNoCheck(i.clone())),
+                "show" | "s" => return Err(InputAfterShow),
+                "exit" | "end" | "quit" => return Ok(Quit),
+                "set" => return Ok(Set(_flag_from_str(i.clone())?)),
+                "unset" => return Ok(Unset(_flag_from_str(i.clone())?)),
+                "notation" => return Ok(SetNotation(_notation_from_str(i.clone())?)),
+                "brute" | "b" => return Err(InputAfterBrute),
+                "_fill" => return Ok(Fill(i.clone())),
+                _ => return Err(UnknownCommand),
+            },
+        _ => return Err(UnknownCommand),
+    };
+}
+
+fn _flag_from_str(s: String) -> Result<Flag, ParseError> {
+	match s.as_str() {
+		"invert" => Ok(Invert),
+		_ => Err(UnknownFlag),
+	}
+}
+
+fn _notation_from_str(s: String) -> Result<Notation, ParseError> {
+	match s.as_str() {
+		"absolute" => Ok(Absolute),
+		"relative" => Ok(Relative),
+		_ => Err(UnknownNotation),
+	}
+}

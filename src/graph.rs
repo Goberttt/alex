@@ -1,13 +1,14 @@
 use std::collections::HashSet;
 
 #[derive(Clone, Copy, Eq, Hash, PartialEq, Debug)]
-struct Tile {
-	pos: [usize; 2],
-	neighboors: [bool; 4], //NESW
+pub struct Tile {
+	pub pos: [usize; 2],
+	pub neighboors: [bool; 4], //NESW
 }
 
+#[derive(Clone)]
 pub struct Graph {
-	vertices: [[Tile; 9]; 9],
+	pub vertices: [[Tile; 9]; 9],
 }
 
 impl Tile {
@@ -80,7 +81,7 @@ impl Graph {
 			_ => () //cannot happen
 		}
 	}
-	pub fn dist_to_goal(&mut self, [i, x, y]: [&usize; 3], [a, b]: [usize; 2], g: usize) -> Option<usize> {
+	pub fn dist_to_goal(&self, [a, b]: [usize; 2], g: usize) -> Option<usize> {
 		//returns the distance to goal g from position [b, a] with extra wall [i, x, y]
 		//simple bfs
 		let mut front = vec![self.vertices[a][b]];
@@ -88,13 +89,11 @@ impl Graph {
 		let mut new_front = Vec::new();
 		let mut steps = 0;
 
-		self.place_wall([*i, *x, *y]); //temporarily place the wall
-
 		loop {
 			steps += 1;
 			for tile in front {
 				if tile.neighboors[0] && !found.contains(&self.vertices[tile.pos[0]][tile.pos[1]+1]) {
-					if tile.pos[1]+1 == g { self.remove_wall([*i, *x, *y]); return Some(steps) };
+					if tile.pos[1]+1 == g { return Some(steps) };
 					found.insert(self.vertices[tile.pos[0]][tile.pos[1]+1]);
 					new_front.push(self.vertices[tile.pos[0]][tile.pos[1]+1]);
 				};
@@ -103,7 +102,7 @@ impl Graph {
 					new_front.push(self.vertices[tile.pos[0]+1][tile.pos[1]]);
 				};
 				if tile.neighboors[2] && !found.contains(&self.vertices[tile.pos[0]][tile.pos[1]-1]) {
-					if tile.pos[1]-1 == g { self.remove_wall([*i, *x, *y]); return Some(steps) };
+					if tile.pos[1]-1 == g { return Some(steps) };
 					found.insert(self.vertices[tile.pos[0]][tile.pos[1]-1]);
 					new_front.push(self.vertices[tile.pos[0]][tile.pos[1]-1]);
 				};
@@ -114,7 +113,41 @@ impl Graph {
 			}
 			front = new_front.clone();
 			new_front.clear();
-			if front.len() == 0 { self.remove_wall([*i, *x, *y]); return None };
+			if front.len() == 0 { return None };
 		}
 	}
 }
+/*
+	fn show_graph(g: &Graph) {
+		print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n");
+		for y in (0..35).rev() {
+			if y%4 == 3 {
+				print!("       {}", y/4+1);
+			} else {print!("       |");};
+			for x in 0..71 {
+				_g(x, y, g);
+			}
+			if y%4 == 3 {
+				print!("{}\n", y/4+1);
+			} else { print!("|\n"); };
+		}
+		print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n");
+	}
+
+	fn _g(x: usize, y: usize, g: &Graph) {
+		match (x%8 == 7, y%4 == 3) {
+			(true, true) => print!("+"),
+			(true, false) => match y%4 {
+				0 => if g.vertices[x/8][y/4].neighboors[1] { print!(">") } else { print!(".") },
+				2 => if g.vertices[x/8+1][y/4].neighboors[3] { print!("<") } else { print!(".") },
+				_ => print!("."),
+			},
+			(false, true) => match x%8 {
+				2 => if g.vertices[x/8][y/4].neighboors[0] { print!("A") } else { print!(".") },
+				4 => if g.vertices[x/8][y/4+1].neighboors[2] {print!("V") } else { print!(".") },
+				_ => print!("."),
+			}
+			_ => print!(" "),
+		}
+	}
+*/

@@ -1,7 +1,11 @@
 pub mod printing {
 	use crate::enums::Color;
 	use crate::enums::Color::*;
-	use crate::Board;
+	use crate::InteractiveInstance;
+	use crate::enums::Flag::*;
+	use crate::enums::Notation;
+	use crate::enums::Notation::*;
+
 	use colored::ColoredString;
 	use colored::Colorize;
 
@@ -127,20 +131,49 @@ pub mod printing {
 			}
 		}
 	}
-	fn show(players: Vec<[usize; 2]>, walls: [[[Color; 8]; 8]; 2], squares: [[Color; 9]; 9]) {
-		print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n");
-		for y in (0..35).rev() {
-			if y%4 == 3 {
-				print!("       {}", y/4+1);
-			} else {print!("       |");};
-			for x in 0..71 {
-				print!("{}", _c(x,y,&players, &walls, &squares));
+	fn show(players: Vec<[usize; 2]>,
+			walls: [[[Color; 8]; 8]; 2],
+			squares: [[Color; 9]; 9],
+			invert: bool,
+			walls_left: [usize; 2],
+			notation: Notation) {
+		match notation {
+			Relative => {
+				print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n");
+				for yy in (0..35).rev() {
+					let y = if invert { 34-yy } else { yy };
+					if y%4 == 3 {
+						print!("       {}", y/4+1);
+					} else {print!("       |");};
+					for x in 0..71 {
+						print!("{}", _c(x, y, &players, &walls, &squares));
+					}
+					if y%4 == 3 {
+						print!("{}\n", y/4+1);
+					} else { print!("|\n"); };
+				}
+				print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n\n");
+				println!("         Walls:      Player 1: {}               Player 2: {}", walls_left[0], walls_left[1]);
+			},
+			Absolute => {
+				print!("       ----a-------b-------c-------d-------e-------f-------g-------h-------i----\n");
+				for yy in (0..35).rev() {
+					let y = if invert { 34-yy } else { yy };
+					if y%4 == 1 {
+						print!("       {}", y/4+1);
+					} else {print!("       |");};
+					for x in 0..71 {
+						print!("{}", _c(x, y, &players, &walls, &squares));
+					}
+					if y%4 == 1 {
+						print!("{}\n", y/4+1);
+					} else { print!("|\n"); };
+				}
+				print!("       ----a-------b-------c-------d-------e-------f-------g-------h-------i----\n\n");
+				println!("         Walls:      Player 1: {}               Player 2: {}", walls_left[0], walls_left[1]);
 			}
-			if y%4 == 3 {
-				print!("{}\n", y/4+1);
-			} else {print!("|\n");};
 		}
-		print!("       --------a-------b-------c-------d-------e-------f-------g-------h--------\n");
+		
 	}
 
 	fn _default_wall_colors(walls: &[[[bool; 8]; 8]; 2]) -> [[[Color; 8]; 8]; 2] {
@@ -155,7 +188,9 @@ pub mod printing {
 		res
 	}
 
-	pub fn print_board(b: &Board) {
-		show(b.players.to_vec(), _default_wall_colors(&b.walls), [[Empty; 9]; 9]);
+	pub fn print_board(ii: &InteractiveInstance) {
+		let b = &ii.board;
+		let invert = ii.flags.get(&Invert).unwrap();
+		show(b.players.to_vec(), _default_wall_colors(&b.walls), [[Empty; 9]; 9], *invert, [b.walls_left[0], b.walls_left[1]], ii.notation.clone());
 	}
 }
