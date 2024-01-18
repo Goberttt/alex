@@ -4,24 +4,23 @@ use std::collections::HashMap;
 use std::fs;
 
 mod vis;
-use vis::printing::print_board;
+use crate::vis::print_board;
 
 mod helpers;
-use helpers::move_conversions::move_from_str;
-use helpers::{ help, get_and_parse_input };
+use crate::helpers::move_from_str;
+use crate::helpers::{ help, get_and_parse_input };
 
 mod board;
 use board::Board;
 
 mod enums;
-use crate::enums::{ IoState, Notation, ParseError, MoveError, Flag, HelpMessage };
-use crate::enums::IoState::*;
-use crate::enums::Notation::*;
-use crate::enums::Flag::*;
-use crate::enums::ParseError::*;
-use crate::enums::MoveError::*;
-
-mod graph;
+use crate::enums::{
+    IoState, IoState::*,
+    Notation, Notation::*,
+    ParseError, ParseError::*,
+    MoveError, MoveError::*,
+    Flag, Flag::*,
+    HelpMessage };
 
 mod game;
 use crate::game::GameState;
@@ -82,17 +81,19 @@ fn main() {
             Set(flag) => { *instance.flags.get_mut(&flag).unwrap() = true; instance.state = Await; },
             SetNotation(not) => { instance.notation = not; instance.state = Await; },
             Unset(flag) => { *instance.flags.get_mut(&flag).unwrap() = false; instance.state = Await; },
-            Brute => { println!("{}", brute_force(GameState {
-                board: instance.board.clone(),
-                children: vec![],
-                parent: None,
-                is_winning: false,
-                is_loosing: false } ));
-                instance.state = Await },
+            Brute(depth) => { 
+                println!("    Score is {}", brute_force(GameState {
+                    board: instance.board.clone(),
+                    children: vec![],
+                    parent: None,
+                    mv_from_parent: None,
+                    score: None}, depth, instance.notation.clone() )); instance.state = Await;
+            },
             Fill(input) => match instance.board.try_fill_from_str(input.clone()) {
                 Ok(()) => { println!("    Fill successful"); instance.state = ShowBoard },
                 Err(err) => { println!("    {}", instance.parse_errors.get(&err).unwrap()); instance.state = Await },
-            }
+            },
+            ForgetMoves => { instance.board.move_sequence.clear(); instance.state = Await; },
             Quit => break,
         };
     }
@@ -116,8 +117,10 @@ fn init() -> InteractiveInstance {
             "FillChordsIncorrect" => { parse_errors.insert(FillChordsIncorrect, error_pair[1].clone()); },
             "UnknownCommand" => { parse_errors.insert(UnknownCommand, error_pair[1].clone()); },
             "InputAfterShow" => { parse_errors.insert(InputAfterShow, error_pair[1].clone()); },
-            "InputAfterBrute" => { parse_errors.insert(InputAfterBrute, error_pair[1].clone()); },
+            "InputAfterForget" => { parse_errors.insert(InputAfterForget, error_pair[1].clone()); },
+            "BruteNoDepthGiven" => { parse_errors.insert(BruteNoDepthGiven, error_pair[1].clone()); },
             "InvalidMove" => { parse_errors.insert(InvalidMove, error_pair[1].clone()); },
+            "NotANumber" => { parse_errors.insert(NotANumber, error_pair[1].clone()); },
             _ => (),
         }
     }
@@ -156,7 +159,7 @@ fn init() -> InteractiveInstance {
             "Set" => { help_messages.insert(HelpMessage::Set, message_pair[1].clone()); },
             "Unset" => { help_messages.insert(HelpMessage::Unset, message_pair[1].clone()); },
             "Brute" => { help_messages.insert(HelpMessage::Brute, message_pair[1].clone()); },
-            "Encoding" => { help_messages.insert(HelpMessage::Encoding, message_pair[1].clone()); },
+            "Encoding" => { help_messages.insert(HelpMessage::Notation, message_pair[1].clone()); },
             "WrongInput" => { help_messages.insert(HelpMessage::WrongInput, message_pair[1].clone()); }
             _ => (),
         }
@@ -171,7 +174,7 @@ fn init() -> InteractiveInstance {
         state: Hello,
         input: None,
         flags: flags,
-        notation: Absolute,
+        notation: Relative,
         parse_errors: parse_errors,
         move_errors: move_errors,
         help_messages: help_messages,

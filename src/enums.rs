@@ -2,9 +2,9 @@
 pub enum Color {
     Empty,
     White,
-    Red,
-    Green,
-    Blue,
+//    Red,
+//    Green,
+//    Blue,
 }
 
 #[derive(Debug, Clone)]
@@ -25,7 +25,8 @@ pub enum IoState {
     SetNotation(Notation),
     Unset(Flag),
     Fill(String),
-    Brute,
+    Brute(usize),
+    ForgetMoves,
     Quit,
 }
 
@@ -51,8 +52,10 @@ pub enum ParseError {
     FillChordsIncorrect,
     UnknownCommand,
     InputAfterShow,
-    InputAfterBrute,
+    BruteNoDepthGiven,
     InvalidMove,
+    NotANumber,
+    InputAfterForget,
 }
 
 #[derive(Eq, Hash, PartialEq, Debug)]
@@ -77,6 +80,6 @@ pub enum HelpMessage {
     Set,
     Unset,
     Brute,
-    Encoding,
+    Notation,
     WrongInput,
 }
