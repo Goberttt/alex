@@ -33,9 +33,8 @@ Brute: Tries to solve the current board position by depth first search/dynamic p
     This makes it easier for the algorithm.
     '_fill' is followed by four numbers, which are choordinates of the lower left and upper right corners to fill.
     For example '_fill 0 0 7 7' fills the entire board with walls.
-
-Encoding: Two encodings for moves are supported, cardinal and algebraic.
-    In cardinal notation, a move is encoded by specifying its direction.
+Notation: Two notations for moves are supported, relative and absolute.
+    In relative notation, a move is encoded by specifying its direction.
     Moving up is 'N', down is 'S', left is 'W' and right is 'E'.
     A jump is encoded by two consecutive moves, for example 'NN' is a jump two spaces up and 'NW' is a diagonal jump.
     Wall are encoded by a 'H' for horizontal or 'V' for vertical followed by the choordinates of the centre of the wall.

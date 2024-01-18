@@ -2,10 +2,12 @@ NoMovesGiven: Moves missing after move command
 NoFlagGiven: Flag missing after set or unset command
 UnknownFlag: Unknown Flag
 UnknownNotation: Unknown notation
-NoNotationGiven: Please specify which notation should be set
+NoNotationGiven: No notation given. Please specify which notation should be set
 NoFillChordsGiven: Choordinates missing. Please specify lower left and upper right corner
-FillChordsIncorrect: Fill chordinates incorrect. Pleas specify lower left and upper right corner
-UnknownCommand: Unknown command. Type Help to see all commands
-InputAfterShow: Imput after show. Please do not type anything after show
-InputAfterBrute: Input after brute. Please do not type anything after brute
-InvalidMove: Move encoding invalid. Perhaps you have the wrong notation set? Type 'help encoding' for help
+FillChordsIncorrect: Fill chordinates incorrect. Please specify lower left and upper right corner
+UnknownCommand: Unknown command. Type 'help' to see all commands
+InputAfterShow: Input after show. Please do not type anything after show
+BruteNoDepthGiven: Please specify how deep to evaluate
+InvalidMove: Move encoding invalid. Perhaps you have the wrong notation set? Type 'help notation' for help
+NotANumber: Not a number. Please only input positive integers
+InputAfterForget: Input after forget. Please do not type anything after forget
