@@ -309,7 +309,7 @@ pub fn get_and_parse_input() -> Result<IoState, ParseError> {
             "notation" => return Err(NoNotationGiven),
             "brute" | "b" => return Err(BruteNoDepthGiven),
             "fill" => return Err(NoFillChordsGiven),
-            "forget" => return Ok(ForgetMoves),
+            //"forget" => return Ok(ForgetMoves),
             _ => return Err(UnknownCommand),
             },
         (Some(s), Some(i)) => match s.as_str() {
@@ -324,7 +324,7 @@ pub fn get_and_parse_input() -> Result<IoState, ParseError> {
                 "notation" => return Ok(SetNotation(_notation_from_str(i.clone())?)),
                 "brute" | "b" => return Ok(Brute(_depth_from_str(i.clone())?)),
                 "fill" => return Ok(Fill(i.clone())),
-                "forget" => return Err(InputAfterForget),
+                //"forget" => return Err(InputAfterForget),
                 _ => return Err(UnknownCommand),
             },
         _ => return Err(UnknownCommand),

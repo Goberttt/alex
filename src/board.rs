@@ -249,13 +249,6 @@ impl Board {
         Ok(())
     }
 
-    fn check_step_to_goal(&self) -> Result<(),()> {
-        let [x, y] = self.players[self.to_move];
-        if self.to_move == 0 && ((x != 8 && self.is_wall(0, x, y)) || (x != 0 && self.is_wall(0, x-1, y))) { return Err(()) };
-        if self.to_move == 1 && ((x != 8 && self.is_wall(0, x, y-1)) || (x != 0 && self.is_wall(0, x-1, y-1))) { return Err(()) };
-        Ok(())
-    }
-
     pub fn extend(&mut self, s: &str, move_errors: &HashMap<MoveError, String>, notation: Notation) -> Result<(), String> {
         //extends the board by the move sequence, returns an error if a move is illegal
         let old_board = self.clone();
@@ -356,10 +349,25 @@ impl Board {
         Ok(())
     }
 
+    fn check_step_to_goal(&self) -> Result<(),()> {
+        let [x, y] = self.players[self.to_move];
+        if self.to_move == 0 && ((x != 8 && self.is_wall(0, x, y)) || (x != 0 && self.is_wall(0, x-1, y))) { return Err(()) };
+        if self.to_move == 1 && ((x != 8 && self.is_wall(0, x, y-1)) || (x != 0 && self.is_wall(0, x-1, y-1))) { return Err(()) };
+        Ok(())
+    }
+
     pub fn current_player_wins(&self) -> bool {
         match self.to_move {
             0 => return self.players[0][1] == 7 && self.check_step_to_goal().is_ok() && self.players[1][1] != 0,
             1 => return self.players[1][1] == 1 && self.check_step_to_goal().is_ok() && self.players[0][1] != 8,
+            _ => return false //cannot happen
+        }
+    }
+
+    pub fn current_player_wins_5x5(&self) -> bool {
+        match self.to_move {
+            0 => return self.players[0][1] == 5 && self.check_step_to_goal().is_ok() && self.players[1][1] != 0,
+            1 => return self.players[1][1] == 3 && self.check_step_to_goal().is_ok() && self.players[0][1] != 8,
             _ => return false //cannot happen
         }
     }

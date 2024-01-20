@@ -84,10 +84,11 @@ fn main() {
             Brute(depth) => { 
                 println!("    Score is {}", brute_force(GameState {
                     board: instance.board.clone(),
-                    children: vec![],
-                    parent: None,
+                    //children: vec![],
+                    //parent: None,
                     mv_from_parent: None,
-                    score: None}, depth, instance.notation.clone() )); instance.state = Await;
+                    //score: None
+                    }, depth, instance.notation.clone() )); instance.state = Await;
             },
             Fill(input) => match instance.board.try_fill_from_str(input.clone()) {
                 Ok(()) => { println!("    Fill successful"); instance.state = ShowBoard },
