@@ -1,5 +1,5 @@
 use crate::Board;
-use crate::enums::{ Notation, Move };
+use crate::enums::{ Notation, Move, Move::* };
 use crate::helpers::string_from_move;
 
 use rayon::prelude::*;
@@ -59,7 +59,7 @@ depth: usize,
 depth_max: usize,
 mut moves: Vec<Move>) -> (Vec<Move>, isize) {
 
-	if depth == depth_max {
+	if depth == depth_max || game.board.current_player_wins() {
 		moves.push(game.mv_from_parent.clone().unwrap());
 		return (moves, game.score());
 	}
@@ -123,7 +123,7 @@ impl GameState {
 		if self.board.to_move == 0 { sum += 1 } else { sum -= 1 };
 		sum
 	}
-/*
+
 	fn score_5x5(&self) -> isize {
 		match self.board.to_move {
 			0 => if self.board.players[0][1] == 5 { return 1000 },
@@ -137,16 +137,56 @@ impl GameState {
 		if self.board.to_move == 0 { sum += 1 } else { sum -= 1 };
 		sum
 	}
-*/
+
 }
 
 
-/*
+
 fn filter_5x5(mv: &Move) -> bool {
 	match mv {
 		Step(_) => true,
 		Wall([_, x, y]) => *x>1 && *x<6 && *y>1 && *y<6
 	}
+}
+
+pub fn brute_force_5x5(mut game: GameState, depth: usize, notation: Notation) -> isize {
+	let mut games = Vec::new();
+
+	for mv in game.board.all_legal_moves() {
+		games.push(
+			GameState {
+				board: game.board.mv_new_no_memory(&mv),
+				//children: vec![],
+				//parent: None,
+				mv_from_parent: Some(mv.clone()),
+				//score: None,
+			});
+	}
+	let results: Vec<(Vec<Move>, isize)> = 
+		games
+			.par_iter()
+			.map(move |game| _brute_force_recursive_dfs_5x5(game.clone(), 1, depth, vec![]))
+			.collect();
+
+	let mut score = 0;
+	match game.board.to_move {
+		0 => score = *results.iter().map(|(_seq, score)| score).max().unwrap(),
+		1 => score = *results.iter().map(|(_seq, score)| score).min().unwrap(),
+		_ => (), //cant happen
+	};
+
+	print!("    Best sequence found:    ");
+	for (seq, sc) in results.iter() {
+		if *sc == score {
+			for m in seq.iter().rev() {
+				print!("{} ", string_from_move(&m, game.board.players[game.board.to_move], notation));
+			}
+			break;
+		}
+	}
+	println!("");
+
+	score
 }
 
 fn _brute_force_recursive_dfs_5x5(
@@ -155,7 +195,7 @@ depth: usize,
 depth_max: usize,
 mut moves: Vec<Move>) -> (Vec<Move>, isize) {
 
-	if depth == depth_max {
+	if depth == depth_max || game.board.current_player_wins_5x5(){
 		moves.push(game.mv_from_parent.clone().unwrap());
 		return (moves, game.score_5x5());
 	}
@@ -198,6 +238,8 @@ mut moves: Vec<Move>) -> (Vec<Move>, isize) {
 	(ret_moves, ret_score)
 
 }
+
+/*
 
 fn _brute_force(game: GameState, depth: usize, notation: Notation, talk: bool, mult: usize) -> (Vec<String>, isize) {
 	let mut arena = vec![vec![game]];

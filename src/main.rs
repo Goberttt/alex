@@ -24,10 +24,11 @@ use crate::enums::{
 
 mod game;
 use crate::game::GameState;
-use crate::game::brute_force;
+use crate::game::{ brute_force, brute_force_5x5 };
 
 pub struct InteractiveInstance {
     pub board: Board,
+    pub history: Vec<Board>,
     pub state: IoState,
     pub input: Option<String>,
     pub flags: HashMap<Flag, bool>,
@@ -55,25 +56,36 @@ fn main() {
                 }
             },
             Help(s) => { help(&s, &instance.help_messages); instance.state = Await; },
-            NewBoard(input) => {
-                match input {
-                    None => {println!("    New board created!"); instance.board = Board::new();},
-                    Some(s) => match Board::from(s.as_str(), &instance.move_errors, instance.notation.clone()) {
-                        Ok(b) => {println!("    New board created!"); instance.board = b;},
-                        Err(_) => println!("    Invalid input!"),
-                    },
-                }
+            NewBoard => {
+                println!("    New board created!");
+                instance.history.push(instance.board.clone());
+                instance.board = Board::new();
+                instance.state = Await;
+                instance.input = None;
+            },
+            NewBoard5x5 => {
+                println!("    New board created!");
+                instance.history.push(instance.board.clone());
+                instance.board = Board::new5x5();
                 instance.state = Await;
                 instance.input = None;
             },
             PlayMoves(input) => {
+                let b = instance.board.clone();
                 match instance.board.extend(input.as_str(), &instance.move_errors, instance.notation.clone()) {
-                    Ok(()) => { println!("    Board updated! Player {} to move.", instance.board.to_move+1); instance.state = ShowBoard },
+                    Ok(()) => {
+                        println!("    Board updated! Player {} to move.", instance.board.to_move+1);
+                        instance.state = ShowBoard;
+                        instance.history.push(b);
+                    },
                     Err(e) => { println!("    {e}"); instance.state = Await },
                 };
             },
-            PlayMovesNoCheck(input) => { instance.board.extend_no_check(input.as_str(), instance.notation.clone()); 
-                println!("    Board updated! Player {} to move.", instance.board.to_move+1); instance.state = ShowBoard },
+            PlayMovesNoCheck(input) => {
+                instance.history.push(instance.board.clone());
+                instance.board.extend_no_check(input.as_str(), instance.notation.clone()); 
+                println!("    Board updated! Player {} to move.", instance.board.to_move+1); instance.state = ShowBoard
+            },
             ShowBoard => {
                 print_board(&instance);
                 instance.state = Await;
@@ -88,13 +100,38 @@ fn main() {
                     //parent: None,
                     mv_from_parent: None,
                     //score: None
-                    }, depth, instance.notation.clone() )); instance.state = Await;
+                }, depth, instance.notation.clone() )); instance.state = Await;
             },
-            Fill(input) => match instance.board.try_fill_from_str(input.clone()) {
-                Ok(()) => { println!("    Fill successful"); instance.state = ShowBoard },
-                Err(err) => { println!("    {}", instance.parse_errors.get(&err).unwrap()); instance.state = Await },
+            Brute5x5(depth) => { 
+                println!("    Score is {}", brute_force_5x5(GameState {
+                    board: instance.board.clone(),
+                    //children: vec![],
+                    //parent: None,
+                    mv_from_parent: None,
+                    //score: None
+                }, depth, instance.notation.clone() )); instance.state = Await;
             },
-            ForgetMoves => { instance.board.move_sequence.clear(); instance.state = Await; },
+            Fill(input) => {
+                let b = instance.board.clone();
+                match instance.board.try_fill_from_str(input.clone()) {
+                    Ok(()) => {
+                        println!("    Fill successful");
+                        instance.state = ShowBoard;
+                        instance.history.push(b);
+                    },
+                    Err(err) => { println!("    {}", instance.parse_errors.get(&err).unwrap()); instance.state = Await },
+                }
+            },
+            Undo(i) => {
+                if instance.history.len() < i { println!("    {}", instance.parse_errors.get(&NotEnoughToUndo).unwrap()); }
+                else {
+                    for _ in 1..i {
+                        instance.history.pop();
+                    }
+                    instance.board = instance.history.pop().unwrap();
+                };
+                instance.state = Await;
+            },
             Quit => break,
         };
     }
@@ -118,10 +155,11 @@ fn init() -> InteractiveInstance {
             "FillChordsIncorrect" => { parse_errors.insert(FillChordsIncorrect, error_pair[1].clone()); },
             "UnknownCommand" => { parse_errors.insert(UnknownCommand, error_pair[1].clone()); },
             "InputAfterShow" => { parse_errors.insert(InputAfterShow, error_pair[1].clone()); },
-            "InputAfterForget" => { parse_errors.insert(InputAfterForget, error_pair[1].clone()); },
+            "InputAfterNew" => { parse_errors.insert(InputAfterNew, error_pair[1].clone()); },
             "BruteNoDepthGiven" => { parse_errors.insert(BruteNoDepthGiven, error_pair[1].clone()); },
             "InvalidMove" => { parse_errors.insert(InvalidMove, error_pair[1].clone()); },
             "NotANumber" => { parse_errors.insert(NotANumber, error_pair[1].clone()); },
+            "NotEnoughToUndo" => { parse_errors.insert(NotEnoughToUndo, error_pair[1].clone()); },
             _ => (),
         }
     }
@@ -160,7 +198,9 @@ fn init() -> InteractiveInstance {
             "Set" => { help_messages.insert(HelpMessage::Set, message_pair[1].clone()); },
             "Unset" => { help_messages.insert(HelpMessage::Unset, message_pair[1].clone()); },
             "Brute" => { help_messages.insert(HelpMessage::Brute, message_pair[1].clone()); },
-            "Encoding" => { help_messages.insert(HelpMessage::Notation, message_pair[1].clone()); },
+            "Notation" => { help_messages.insert(HelpMessage::Notation, message_pair[1].clone()); },
+            "Fill" => { help_messages.insert(HelpMessage::Fill, message_pair[1].clone()); },
+            "Undo" => { help_messages.insert(HelpMessage::Undo, message_pair[1].clone()); },
             "WrongInput" => { help_messages.insert(HelpMessage::WrongInput, message_pair[1].clone()); }
             _ => (),
         }
@@ -172,6 +212,7 @@ fn init() -> InteractiveInstance {
 
     InteractiveInstance {
         board: Board::new(),
+        history: Vec::new(),
         state: Hello,
         input: None,
         flags: flags,

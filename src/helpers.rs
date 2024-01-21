@@ -280,6 +280,8 @@ pub fn help(s: &Option<String>, help_texts: &HashMap<HelpMessage, String>) {
             "brute" => println!("    {}", help_texts.get(&HelpMessage::Brute).unwrap()),
             "set" => println!("    {}", help_texts.get(&HelpMessage::Set).unwrap()),
             "unset" => println!("    {}", help_texts.get(&HelpMessage::Unset).unwrap()),
+            "undo" => println!("    {}", help_texts.get(&HelpMessage::Undo).unwrap()),
+            "fill" => println!("    {}", help_texts.get(&HelpMessage::Fill).unwrap()),
             _ => println!("    {}", help_texts.get(&HelpMessage::WrongInput).unwrap()),
         }
     }
@@ -299,7 +301,8 @@ pub fn get_and_parse_input() -> Result<IoState, ParseError> {
     match (new.get(0), new.get(1)) {
         (Some(s), None) => match s.as_str() {
             "help" | "h" => return Ok(Help(None)),
-            "new" | "n" => return Ok(NewBoard(None)),
+            "new" | "n" => return Ok(NewBoard),
+            "new5x5" => return Ok(NewBoard5x5),
             "move" | "m" => return Err(NoMovesGiven),
             "_move_no_check" | "_mnc" => return Err(NoMovesGiven),
             "show" | "s" => return Ok(ShowBoard),
@@ -308,13 +311,15 @@ pub fn get_and_parse_input() -> Result<IoState, ParseError> {
             "unset" => return Err(NoFlagGiven),
             "notation" => return Err(NoNotationGiven),
             "brute" | "b" => return Err(BruteNoDepthGiven),
+            "brute5x5" => return Err(BruteNoDepthGiven),
             "fill" => return Err(NoFillChordsGiven),
-            //"forget" => return Ok(ForgetMoves),
+            "undo" => return Ok(Undo(1)),
             _ => return Err(UnknownCommand),
             },
         (Some(s), Some(i)) => match s.as_str() {
                 "help" | "h" => return Ok(Help(Some((*i.clone()).to_string()))),
-                "new" | "n" => return Ok(NewBoard(Some(i.clone()))),
+                "new" | "n" => return Err(InputAfterNew),
+                "new5x5" => return Err(InputAfterNew),
                 "move" | "m" => return Ok(PlayMoves(i.clone())),
                 "_move_no_check" | "_mnc" => return Ok(PlayMovesNoCheck(i.clone())),
                 "show" | "s" => return Err(InputAfterShow),
@@ -322,9 +327,10 @@ pub fn get_and_parse_input() -> Result<IoState, ParseError> {
                 "set" => return Ok(Set(_flag_from_str(i.clone())?)),
                 "unset" => return Ok(Unset(_flag_from_str(i.clone())?)),
                 "notation" => return Ok(SetNotation(_notation_from_str(i.clone())?)),
-                "brute" | "b" => return Ok(Brute(_depth_from_str(i.clone())?)),
+                "brute" | "b" => return Ok(Brute(_int_from_str(i.clone())?)),
+                "brute5x5" => return Ok(Brute5x5(_int_from_str(i.clone())?)),
                 "fill" => return Ok(Fill(i.clone())),
-                //"forget" => return Err(InputAfterForget),
+                "undo" => return Ok(Undo(_int_from_str(i.clone())?)),
                 _ => return Err(UnknownCommand),
             },
         _ => return Err(UnknownCommand),
@@ -346,7 +352,7 @@ fn _notation_from_str(s: String) -> Result<Notation, ParseError> {
 	}
 }
 
-fn _depth_from_str(s: String) -> Result<usize, ParseError> {
+fn _int_from_str(s: String) -> Result<usize, ParseError> {
 	match s.parse::<usize>() {
 		Ok(n) => Ok(n),
 		Err(_) => Err(NotANumber),

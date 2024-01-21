@@ -17,7 +17,8 @@ pub enum IoState {
     Hello,
     Await,
     Help(Option<String>),
-    NewBoard(Option<String>),
+    NewBoard,
+    NewBoard5x5,
     PlayMoves(String),
     PlayMovesNoCheck(String),
     ShowBoard,
@@ -26,7 +27,8 @@ pub enum IoState {
     Unset(Flag),
     Fill(String),
     Brute(usize),
-    ForgetMoves,
+    Brute5x5(usize),
+    Undo(usize),
     Quit,
 }
 
@@ -55,7 +57,8 @@ pub enum ParseError {
     BruteNoDepthGiven,
     InvalidMove,
     NotANumber,
-    InputAfterForget,
+    NotEnoughToUndo,
+    InputAfterNew,
 }
 
 #[derive(Eq, Hash, PartialEq, Debug)]
@@ -80,6 +83,8 @@ pub enum HelpMessage {
     Set,
     Unset,
     Brute,
+    Fill,
+    Undo,
     Notation,
     WrongInput,
 }

@@ -46,6 +46,16 @@ impl Board {
         Board {..Default::default()}
     }
 
+    pub fn new5x5() -> Board {
+        Board {
+            walls: 80770148214459885546621745580772163713, 
+            players: [[4,2],[4,6]],
+            to_move: 0,
+            walls_left: [3, 3],
+            move_sequence: vec![],
+        }
+    }
+
     pub fn mv(&mut self, m: &Move) {
         //actually applies a move
         //detect illegal moves before calling! Might panic if illegal move is passed
@@ -440,43 +450,6 @@ impl Board {
             if front.is_empty() { return None };
         }
     } 
-
-    pub fn hash(&self) -> [u64; 3] {
-        let mut horizontal = 0;
-        let mut vertical = 0;
-        let mut positions_and_to_move = 0;
-
-        //horizontan:
-        for x in 0..=7 {
-            for y in 0..=7 {
-                if self.is_wall(0, x, y) { horizontal += 1 };
-                horizontal = horizontal << 1;
-            }
-        }
-        //vertical:
-        for x in 0..=7 {
-            for y in 0..=7 {
-                if self.is_wall(1, x, y) { vertical += 1 };
-                vertical = vertical << 1;
-            }
-        }
-
-        //player0:
-        positions_and_to_move += self.players[0][0];
-        positions_and_to_move = positions_and_to_move << 4;
-        positions_and_to_move += self.players[0][1];
-        positions_and_to_move = positions_and_to_move << 4;
-        //player1:
-        positions_and_to_move += self.players[1][0];
-        positions_and_to_move = positions_and_to_move << 4;
-        positions_and_to_move += self.players[1][1];
-        positions_and_to_move = positions_and_to_move << 4;
-
-        //to_move:
-        positions_and_to_move += self.to_move;
-
-        [horizontal, vertical, positions_and_to_move.try_into().unwrap()]
-    }
 }
 
 
