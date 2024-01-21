@@ -1,5 +1,5 @@
 [package]
-name = "alex"
+name = "quoridor"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,3 +8,6 @@ edition = "2021"
 [dependencies]
 
 colored = "2.0.4"
+rand = "0.8.4"
+stacker = "0.1.15"
+rayon = "1.8"
