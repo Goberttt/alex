@@ -112,6 +112,7 @@ impl Board {
     fn check_move(&mut self, mv: &Move) -> Result<(), MoveError> {
         //checks if a move is illegal. Horrible case distinction
         //to_move is true if its player 0's turn, else its false. This is to check a move sequence ocrrectly
+
         let mut tm = 0; //to move
         let mut ntm = 0; //not to move
         match self.to_move {
@@ -359,26 +360,26 @@ impl Board {
         Ok(())
     }
 
-    fn check_step_to_goal(&self) -> Result<(),()> {
+    fn check_step_to_goal(&self) -> bool {
         let [x, y] = self.players[self.to_move];
-        if self.to_move == 0 && ((x != 8 && self.is_wall(0, x, y)) || (x != 0 && self.is_wall(0, x-1, y))) { return Err(()) };
-        if self.to_move == 1 && ((x != 8 && self.is_wall(0, x, y-1)) || (x != 0 && self.is_wall(0, x-1, y-1))) { return Err(()) };
-        Ok(())
+        if self.to_move == 0 && ((x != 8 && y != 8 && self.is_wall(0, x, y)) || (x != 0 && y != 8 && self.is_wall(0, x-1, y))) { return false };
+        if self.to_move == 1 && ((x != 8 && y != 0 && self.is_wall(0, x, y-1)) || (x != 0 && y != 0 && self.is_wall(0, x-1, y-1))) { return false };
+        true
     }
 
     pub fn current_player_wins(&self) -> bool {
         match self.to_move {
-            0 => return self.players[0][1] == 7 && self.check_step_to_goal().is_ok() && self.players[1][1] != 0,
-            1 => return self.players[1][1] == 1 && self.check_step_to_goal().is_ok() && self.players[0][1] != 8,
-            _ => return false //cannot happen
+            0 => self.players[0][1] >= 7 && self.check_step_to_goal() && self.players[1][1] != 0,
+            1 => self.players[1][1] <= 1 && self.check_step_to_goal() && self.players[0][1] != 8,
+            _ => false //cannot happen
         }
     }
 
     pub fn current_player_wins_5x5(&self) -> bool {
         match self.to_move {
-            0 => return self.players[0][1] == 5 && self.check_step_to_goal().is_ok() && self.players[1][1] != 0,
-            1 => return self.players[1][1] == 3 && self.check_step_to_goal().is_ok() && self.players[0][1] != 8,
-            _ => return false //cannot happen
+            0 => self.players[0][1] >= 5 && self.check_step_to_goal() && self.players[1][1] != 0,
+            1 => self.players[1][1] <= 3 && self.check_step_to_goal() && self.players[0][1] != 8,
+            _ => false //cannot happen
         }
     }
 
@@ -449,9 +450,5 @@ impl Board {
             front = new_front;
             if front.is_empty() { return None };
         }
-    } 
+    }
 }
-
-
-//m Va1 Va3 Va5 Va7 Vb1 Vb3 Vb5 Vb7 Vc1 Vc3 Vc5 Vc7 Vd1 Vd3 Vd5 Vd7 Ve1 Ve3 Ve5 Ve7 Vf1 Vf3 Vf5 Vf7 Vg1 Vg3 Vg5 Vg7 Vh1 Vh3 Vh5 Vh7 Ha8 Hc8 Hf8 Hh8 Ha6 Hc6 Hf6 Hh6 Ha4 Hc4 Hf4 Hh4 Ha2 Hc2 Hf2 Hh2
-//m E E E E E E Vg1 Vg3 Vg5 Vg7 Hf1 Hf2 Hf3 Hf4 Hf5 Hf6 Hf7 Hf8 Hd1 Hd2 Hd3 Hd4 Hd5 Hd6 Hd7 Hd8 Hb1 Hb2 Hb3 Hb4 Hb5 Hb6 Hb7 Hb8 Va8 Va6 Va4 Va2

@@ -72,6 +72,7 @@ pub enum MoveError {
     SpaceOccupied,
     P1NoPath,
     P2NoPath,
+    GameIsOver,
 }
 
 #[derive(Eq, Hash, PartialEq)]
