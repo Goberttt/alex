@@ -87,7 +87,7 @@ impl Board {
         self.move_sequence.push(m.clone());
     }
 
-    pub fn mv_new_no_memory(&mut self, m: &Move) -> Board {
+    pub fn mv_new_no_memory(&self, m: &Move) -> Board {
         //makes the move but doesnt save it to memory
         let mut b = self.mv_new(m);
         b.move_sequence.clear();
