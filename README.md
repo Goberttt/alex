@@ -16,6 +16,6 @@ if you are on Windows make sure you install Cargo and not just the Rust compiler
   
   -> If you have a lot of free time you can also just create the files yourself and copy the source code (not recommended).
 
-3: Go into the folder alex with the terminal and type cargo run. This will compile the program and run it. Dont worry about possible warnings. That is just my lazy programming for now. I will fix these later.
+3: Go into the folder alex with the terminal and type cargo run --release. This will compile the program and run it. Dont worry about possible warnings. That is just my lazy programming for now. I will fix these later.
 
 4: Have fun!
