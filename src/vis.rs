@@ -210,4 +210,7 @@ pub fn print_board(ii: &InteractiveInstance) {
 		[[Empty; 9]; 9], *invert, [b.walls_left[0],
 		b.walls_left[1]], ii.notation.clone(),
 		ii.board.move_sequence.clone());
+
+	//println!("score: {}", 2*(ii.board.dist_to_goal(1).unwrap() as isize - ii.board.dist_to_goal(0).unwrap() as isize));
+	//println!("dists: {}, {}", ii.board.dist_to_goal(1).unwrap(), ii.board.dist_to_goal(0).unwrap());
 }

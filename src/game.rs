@@ -20,7 +20,7 @@ pub fn brute_force(mut game: GameState, max_depth: usize, notation: Notation) ->
 	let mut s = 1;
 	if game.board.to_move == 1 { s = -1 };
 
-	let (seq, score) = 
+	let res: Result<Vec<(Vec<Move>, isize)>, (Vec<Move>, isize)> =
 		game.board
 			.all_legal_moves()
 			.par_iter()
@@ -32,8 +32,13 @@ pub fn brute_force(mut game: GameState, max_depth: usize, notation: Notation) ->
 				},
 				1,
 				max_depth))
-			.max_by_key(|res| s*res.1)
-			.unwrap();
+			.collect();
+
+	let (seq, score);
+	match res {
+		Ok(v) => (seq, score) = v.into_iter().max_by_key(|(_seq, score)| s*score).unwrap(),
+		Err((se, sc)) => (seq, score) = (se, sc),
+	}
 
 	let total_time = SystemTime::now().duration_since(begin_time).unwrap().as_secs();
 
@@ -42,25 +47,25 @@ pub fn brute_force(mut game: GameState, max_depth: usize, notation: Notation) ->
 	print!("    Best sequence found:    ");
 	for m in seq.iter().rev() {
 		print!("{} ", string_from_move(&m, game.board.players[game.board.to_move], notation));
-	}		
+	}
 	println!("");
 
-	s*score
+	score
 }
 
 fn _brute_force_recursive_dfs(
 mut game: GameState,
 depth: usize,
-max_depth: usize) -> (Vec<Move>, isize) {
+max_depth: usize) -> Result<(Vec<Move>, isize), (Vec<Move>, isize)> {
 
 	if depth == max_depth || game.board.current_player_wins() {
-		return (vec![game.mv_from_parent.clone().unwrap()], game.score());
+		return Ok((vec![game.mv_from_parent.clone().unwrap()], game.score()));
 	}
 
 	let mut s = 1;
 	if game.board.to_move == 1 { s = -1 };
 
-	let (mut seq, score) = 
+	let res: Result<Vec<(Vec<Move>, isize)>, (Vec<Move>, isize)> =
 		game.board
 			.all_legal_moves()
 			.par_iter()
@@ -72,11 +77,19 @@ max_depth: usize) -> (Vec<Move>, isize) {
 				},
 				depth+1,
 				max_depth))
-			.max_by_key(|res| s*res.1)
-			.unwrap();
+			.collect();
+	let (mut seq, score);
+	match res {
+		Ok(v) => (seq, score) = v.into_iter().max_by_key(|(_seq, score)| s*score).unwrap(),
+		Err((se, sc)) => (seq, score) = (se, sc),
+	}
+
 	seq.push(game.mv_from_parent.clone().unwrap());
 
-	(seq, score)
+	match (game.board.to_move == 0 && score == -1000) || (game.board.to_move == 1 && score == 1000) {
+		true => Err((seq, score)),
+		false => Ok((seq, score)),
+	}
 }
 
 impl GameState {
@@ -120,7 +133,7 @@ pub fn brute_force_5x5(mut game: GameState, max_depth: usize, notation: Notation
 	let mut s = 1;
 	if game.board.to_move == 1 { s = -1 };
 
-	let (seq, score) = 
+	let res: Result<Vec<(Vec<Move>, isize)>, (Vec<Move>, isize)> = 
 		game.board
 			.all_legal_moves()
 			.par_iter()
@@ -133,8 +146,13 @@ pub fn brute_force_5x5(mut game: GameState, max_depth: usize, notation: Notation
 				},
 				1,
 				max_depth))
-			.max_by_key(|res| s*res.1)
-			.unwrap();
+			.collect();
+
+	let (seq, score);
+	match res {
+		Ok(v) => (seq, score) = v.into_iter().max_by_key(|(_seq, score)| s*score).unwrap(),
+		Err((se, sc)) => (seq, score) = (se, sc),
+	}
 
 	let total_time = SystemTime::now().duration_since(begin_time).unwrap().as_secs();
 
@@ -146,22 +164,22 @@ pub fn brute_force_5x5(mut game: GameState, max_depth: usize, notation: Notation
 	}		
 	println!("");
 
-	s*score
+	score
 }
 
 fn _brute_force_recursive_dfs_5x5(
 mut game: GameState,
 depth: usize,
-max_depth: usize) -> (Vec<Move>, isize) {
+max_depth: usize) -> Result<(Vec<Move>, isize), (Vec<Move>, isize)> {
 
 	if depth == max_depth || game.board.current_player_wins_5x5() {
-		return (vec![game.mv_from_parent.clone().unwrap()], game.score_5x5());
+		return Ok((vec![game.mv_from_parent.clone().unwrap()], game.score_5x5()));
 	}
 
 	let mut s = 1;
 	if game.board.to_move == 1 { s = -1 };
 
-	let (mut seq, score) = 
+	let res: Result<Vec<(Vec<Move>, isize)>, (Vec<Move>, isize)> = 
 		game.board
 			.all_legal_moves()
 			.par_iter()
@@ -174,9 +192,17 @@ max_depth: usize) -> (Vec<Move>, isize) {
 				},
 				depth+1,
 				max_depth))
-			.max_by_key(|res| s*res.1)
-			.unwrap();
+			.collect();
+	let (mut seq, score);
+	match res {
+		Ok(v) => (seq, score) = v.into_iter().max_by_key(|(_seq, score)| s*score).unwrap(),
+		Err((se, sc)) => (seq, score) = (se, sc),
+	}
+
 	seq.push(game.mv_from_parent.clone().unwrap());
 
-	(seq, score)
+	match (game.board.to_move == 0 && score == -1000) || (game.board.to_move == 1 && score == 1000) {
+		true => Err((seq, score)),
+		false => Ok((seq, score)),
+	}
 }
