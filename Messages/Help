@@ -3,45 +3,53 @@ General: The following commands are supported
     new,
     move,
     show,
+    undo,
+    fill,
     set,
     unset and
     brute.
     Type 'help <command>' to get help about a command.
-    Type 'help encoding' to get help about the current move encoding.
+    Type 'help notation' to get help about the notations supported.
 
 New: Creates a new board.
 
 Move: Must be followed by a move or a sequence of moves. For example
-    'move N S N S' or 'move e2 e8 e3h', depending on the encoding used.
+    'move N S N S' or 'move e2 e8 e3h', depending on the notation used.
 
 Show: Prints the current board.
 
-Set: Sets a flag or changes the move encoding used. The flags are
+Set: Sets a flag. The flags are
     invert - inverts the view of the board, i.e. rotates the board by 180 degrees
     more to come...
-    The encoding keywords are 'cardinal' and 'absolute'
 
 Unset: Unsets a flag. The flags are
     invert - inverts the view of the board, i.e. rotates the board by 180 degrees
     more to come...
 
-Brute: Tries to solve the current board position by depth first search/dynamic programming.
-    It should return the player that will win from the current position.
-    However, it is still unstable and obviously only works for very simple board positions.
-    Will crash if the computers memory is used up.
-    You can use the '_fill' command to fill unused areas of the board.
-    This makes it easier for the algorithm.
-    '_fill' is followed by four numbers, which are choordinates of the lower left and upper right corners to fill.
-    For example '_fill 0 0 7 7' fills the entire board with walls.
+Brute: Tries to solve the current board position by depth first search up to the specified depth.
+    It should return a score and a sequence of suggested moves leading to this score.
+    You can use the 'fill' command to fill unused areas of the board. This makes it easier for the algorithm.
+    'fill' is followed by four numbers, which are choordinates of the lower left and upper right corners to fill.
+    For example 'fill 0 0 7 7' fills the entire board with walls.
 
-Notation: Two notations for moves are supported, relative and absolute.
+Notation: Sets the notation used. Must be followed by 'relative' or 'absolute'.
+/////////
     In relative notation, a move is encoded by specifying its direction.
     Moving up is 'N', down is 'S', left is 'W' and right is 'E'.
     A jump is encoded by two consecutive moves, for example 'NN' is a jump two spaces up and 'NW' is a diagonal jump.
     Wall are encoded by a 'H' for horizontal or 'V' for vertical followed by the choordinates of the centre of the wall.
-    Type 'show' to see the choordinate system (set cardinal notation with 'set cardinal'). An example is 'Hd3'.
-    /////////
-    In absolute notation, a move is encoded by the chordinates of the player after the move. Type 'show' to see the choordinate system (set absolute notation with 'set absolute').
-    A Wall is encoded by the choordinates of its lower left tile followed by 'h' for horizontal or 'v' for vertival. An example is 'e3h'.
+    Type 'show' to see the choordinate system (set relative notation with 'notation relative' first).
+    An example is 'N S N S N S Hd3'.
+/////////
+    In absolute notation, a move is encoded by the chordinates of the player after the move.
+    Type 'show' to see the choordinate system (set absolute notation with 'notation absolute' first).
+    A Wall is encoded by the choordinates of its lower left square followed by 'h' for horizontal or 'v' for vertival.
+    An example is 'e3h'.
+
+Undo: Tries to undo the last command that changed the board (i.e. ignoring things like 'show').
+    Can be used like 'undo' to undo 1 step but can also be followed by a number to undo that many steps, like 'undo 5'.
+
+Fill: Must be followed by 4 numbers in the range 0..7 inclusive.
+    The numbers are the choordinate of the lower left and upper right corners of the area to be filled.
 
 WrongInput: I'm sorry, I don't understand the input. Type 'help' for help.
