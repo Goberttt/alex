@@ -33,6 +33,7 @@ Brute: Tries to solve the current board position by depth first search/dynamic p
     This makes it easier for the algorithm.
     '_fill' is followed by four numbers, which are choordinates of the lower left and upper right corners to fill.
     For example '_fill 0 0 7 7' fills the entire board with walls.
+
 Notation: Two notations for moves are supported, relative and absolute.
     In relative notation, a move is encoded by specifying its direction.
     Moving up is 'N', down is 'S', left is 'W' and right is 'E'.
