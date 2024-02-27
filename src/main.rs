@@ -22,9 +22,8 @@ use crate::enums::{
     Flag, Flag::*,
     HelpMessage };
 
-mod game;
-use crate::game::GameState;
-use crate::game::{ brute_force, brute_force_5x5 };
+mod brute;
+use crate::brute::{ brute_force, brute_force_5x5 };
 
 pub struct InteractiveInstance {
     pub board: Board,
@@ -74,7 +73,7 @@ fn main() {
                 let b = instance.board.clone();
                 match instance.board.extend(input.as_str(), &instance.move_errors, instance.notation.clone()) {
                     Ok(()) => {
-                        println!("    Board updated! Player {} to move.", instance.board.to_move+1);
+                        println!("    Board updated! Player {} to move.", instance.board.to_move_indices().0+1);
                         instance.state = ShowBoard;
                         instance.history.push(b);
                     },
@@ -84,7 +83,7 @@ fn main() {
             PlayMovesNoCheck(input) => {
                 instance.history.push(instance.board.clone());
                 instance.board.extend_no_check(input.as_str(), instance.notation.clone()); 
-                println!("    Board updated! Player {} to move.", instance.board.to_move+1); instance.state = ShowBoard
+                println!("    Board updated! Player {} to move.", instance.board.to_move_indices().0+1); instance.state = ShowBoard
             },
             ShowBoard => {
                 print_board(&instance);
@@ -94,22 +93,10 @@ fn main() {
             SetNotation(not) => { instance.notation = not; instance.state = Await; },
             Unset(flag) => { *instance.flags.get_mut(&flag).unwrap() = false; instance.state = Await; },
             Brute(depth) => { 
-                println!("    Score is {}", brute_force(GameState {
-                    board: instance.board.clone(),
-                    //children: vec![],
-                    //parent: None,
-                    mv_from_parent: None,
-                    //score: None
-                }, depth, instance.notation.clone() )); instance.state = Await;
+                brute_force(instance.board.clone(), depth, instance.notation.clone() ); instance.state = Await;
             },
             Brute5x5(depth) => { 
-                println!("    Score is {}", brute_force_5x5(GameState {
-                    board: instance.board.clone(),
-                    //children: vec![],
-                    //parent: None,
-                    mv_from_parent: None,
-                    //score: None
-                }, depth, instance.notation.clone() )); instance.state = Await;
+                brute_force_5x5(instance.board.clone(), depth, instance.notation.clone() ); instance.state = Await;
             },
             Fill(input) => {
                 let b = instance.board.clone();

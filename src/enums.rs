@@ -13,6 +13,12 @@ pub enum Move {
     Wall([usize; 3]),
 }
 
+#[derive(Clone, Eq, PartialEq)]
+pub enum Player {
+    Player1,
+    Player2
+}
+
 pub enum IoState {
     Hello,
     Await,

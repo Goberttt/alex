@@ -1,3 +1,5 @@
+//contains functionality for printing the board. Will be expanded to make coloring possible
+
 use crate::InteractiveInstance;
 use crate::enums::{ Color, Color::*, Notation, Notation::*, Move, Move::*, Flag::* };
 use crate::helpers::string_from_move;
@@ -205,7 +207,7 @@ pub fn print_board(ii: &InteractiveInstance) {
 	let b = &ii.board;
 	let invert = ii.flags.get(&Invert).unwrap();
 	show(b.players.to_vec(),
-		b.to_move,
+		b.to_move_indices().0,
 		_default_wall_colors(&b.walls),
 		[[Empty; 9]; 9], *invert, [b.walls_left[0],
 		b.walls_left[1]], ii.notation.clone(),

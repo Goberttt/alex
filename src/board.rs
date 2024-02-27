@@ -3,7 +3,8 @@ use std::collections::{ HashMap, HashSet };
 use crate::enums::{ Move, Move::*,
     MoveError, MoveError::*,
     ParseError, ParseError::*,
-    Notation };
+    Notation,
+    Player, Player::* };
 
 use crate::move_from_str;
 //use crate::graph::Graph;
@@ -12,7 +13,7 @@ use crate::move_from_str;
 pub struct Board {
     pub walls: u128,               //bitmap. First 64 horizontal, other 64 vertival, 64*i + 8*y + x is bit for wall [i, x, y]
     pub players: [[usize; 2]; 2],
-    pub to_move: usize,
+    pub to_move: Player,
     pub walls_left: [usize; 2],
     pub move_sequence: Vec<Move>,
 }
@@ -22,7 +23,7 @@ impl Default for Board {
         Board {
             walls: 0, 
             players: [[4,0],[4,8]],
-            to_move: 0,
+            to_move: Player1,
             walls_left: [10, 10],
             move_sequence: vec![],
         }
@@ -42,6 +43,13 @@ impl Board {
         self.walls = self.walls & !(1 << (64*i + 8*y + x));
     }
 
+    pub fn to_move_indices(&self) -> (usize, usize) {
+        match self.to_move {
+            Player1 => (0, 1),
+            Player2 => (1, 0)
+        }
+    }
+
     pub fn new() -> Board {
         Board {..Default::default()}
     }
@@ -50,7 +58,7 @@ impl Board {
         Board {
             walls: 80770148214459885546621745580772163713, 
             players: [[4,2],[4,6]],
-            to_move: 0,
+            to_move: Player1,
             walls_left: [3, 3],
             move_sequence: vec![],
         }
@@ -59,6 +67,7 @@ impl Board {
     pub fn mv(&mut self, m: &Move) {
         //actually applies a move
         //detect illegal moves before calling! Might panic if illegal move is passed
+        let tm = self.to_move_indices().0;
         match m {
             Step(mut d) => {
                 let mut code: Vec<usize> = vec![];
@@ -69,10 +78,10 @@ impl Board {
                 } {};
                 for i in code.iter().rev() {
                     match i {
-                    1 => self.players[self.to_move][1] += 1, //N
-                    2 => self.players[self.to_move][0] += 1, //E
-                    3 => self.players[self.to_move][1] -= 1, //S
-                    4 => self.players[self.to_move][0] -= 1, //W
+                    1 => self.players[tm][1] += 1, //N
+                    2 => self.players[tm][0] += 1, //E
+                    3 => self.players[tm][1] -= 1, //S
+                    4 => self.players[tm][0] -= 1, //W
                     _ => (),
                     }
 
@@ -80,10 +89,13 @@ impl Board {
             },
             Wall([i, x, y]) => { 
                 self.place_wall(*i,*x,*y);
-                self.walls_left[self.to_move] -= 1;
+                self.walls_left[tm] -= 1;
             },
         }
-        if self.to_move == 0 { self.to_move = 1 } else { self.to_move = 0 };
+        match self.to_move {
+            Player1 => self.to_move = Player2,
+            Player2 => self.to_move = Player1
+        }
         self.move_sequence.push(m.clone());
     }
 
@@ -113,13 +125,7 @@ impl Board {
         //checks if a move is illegal. Horrible case distinction
         //to_move is true if its player 0's turn, else its false. This is to check a move sequence ocrrectly
 
-        let mut tm = 0; //to move
-        let mut ntm = 0; //not to move
-        match self.to_move {
-            0 => { tm = 0; ntm = 1 },
-            1 => { tm = 1; ntm = 0 },
-            _ => () //cannot happen
-        };
+        let (tm, ntm) = self.to_move_indices();
         let [mut x, mut y] = self.players[tm];
         let [a,b] = self.players[ntm];
         match mv {
@@ -236,7 +242,7 @@ impl Board {
                 }
             }
             Wall([i, x, y]) => { 
-                if self.walls_left[self.to_move] == 0 { return Err(NoWallsLeft) };
+                if self.walls_left[tm] == 0 { return Err(NoWallsLeft) };
                 if self.is_wall(0, *x, *y) || self.is_wall(1, *x, *y) { return Err(SpaceOccupied) };
                 match i {
                     0 => if (*x != 0 && self.is_wall(0, *x-1, *y)) || (*x != 7 && self.is_wall(0, *x+1, *y)) 
@@ -263,13 +269,7 @@ impl Board {
     pub fn extend(&mut self, s: &str, move_errors: &HashMap<MoveError, String>, notation: Notation) -> Result<(), String> {
         //extends the board by the move sequence, returns an error if a move is illegal
         let old_board = self.clone();
-        let mut tm = 0; //to move
-        let mut ntm = 0; //not to move
-        match self.to_move {
-            0 => { tm = 0; ntm = 1 },
-            1 => { tm = 1; ntm = 0 },
-            _ => () //cannot happen
-        };
+        let (tm, ntm) = self.to_move_indices();
         
         for (i,m) in s.split_whitespace().enumerate() {
             match move_from_str(m, self.players[tm], self.players[ntm], notation) {
@@ -292,13 +292,8 @@ impl Board {
 
     pub fn extend_no_check(&mut self, s: &str, notation: Notation) {
         //extends the board by the move sequences, might panic if a move is illegal
-        let mut tm = 0; //to move
-        let mut ntm = 0; //not to move
-        match self.to_move {
-            0 => { tm = 0; ntm = 1 },
-            1 => { tm = 1; ntm = 0 },
-            _ => () //cannot happen
-        };
+        let (tm, ntm) = self.to_move_indices();
+
         for m in s.split_whitespace() {
             match move_from_str(m, self.players[tm], self.players[ntm], notation) {
                 Ok(mv) => self.mv(&mv),
@@ -312,14 +307,17 @@ impl Board {
 
         let mut moves = Vec::new();
         //orders the legal move such that in the brute force dfs we walk towards the goal greedely. Dirty implementation, fix later
-        if self.to_move == 0 {
-            for dir in [1,11,12,14,21,2,4,22,23,41,44,43,3,32,33,34] {
-                if self.check_move(&Step(dir)).is_ok() { moves.push(Step(dir)) };
-            } 
-        } else {
-            for dir in [3,33,32,34,2,4,23,22,21,44,43,41,1,14,12,11] {
-                if self.check_move(&Step(dir)).is_ok() { moves.push(Step(dir)) };
-            } 
+        match self.to_move {
+            Player1 => {
+                for dir in [1,11,12,14,21,2,4,22,23,41,44,43,3,32,33,34] {
+                    if self.check_move(&Step(dir)).is_ok() { moves.push(Step(dir)) };
+                }
+            },
+            Player2 => {
+                for dir in [3,33,32,34,2,4,23,22,21,44,43,41,1,14,12,11] {
+                    if self.check_move(&Step(dir)).is_ok() { moves.push(Step(dir)) };
+                }
+            }
         }
         for i in 0..=1 {
             for x in 0..=7 {
@@ -361,25 +359,29 @@ impl Board {
     }
 
     fn check_step_to_goal(&self) -> bool {
-        let [x, y] = self.players[self.to_move];
-        if self.to_move == 0 && ((x != 8 && y != 8 && self.is_wall(0, x, y)) || (x != 0 && y != 8 && self.is_wall(0, x-1, y))) { return false };
-        if self.to_move == 1 && ((x != 8 && y != 0 && self.is_wall(0, x, y-1)) || (x != 0 && y != 0 && self.is_wall(0, x-1, y-1))) { return false };
-        true
+        let tm;
+        match self.to_move {
+            Player1 => tm = 0,
+            Player2 => tm = 1,
+        }
+        let [x, y] = self.players[tm];
+        match self.to_move {
+            Player1 => !((x != 8 && y != 8 && self.is_wall(0, x, y)) || (x != 0 && y != 8 && self.is_wall(0, x-1, y))),
+            Player2 => !((x != 8 && y != 0 && self.is_wall(0, x, y-1)) || (x != 0 && y != 0 && self.is_wall(0, x-1, y-1)))
+        }
     }
 
     pub fn current_player_wins(&self) -> bool {
         match self.to_move {
-            0 => self.players[0][1] >= 7 && self.check_step_to_goal() && self.players[1][1] != 0,
-            1 => self.players[1][1] <= 1 && self.check_step_to_goal() && self.players[0][1] != 8,
-            _ => false //cannot happen
+            Player1 => self.players[0][1] >= 7 && self.check_step_to_goal() && self.players[1][1] != 0,
+            Player2 => self.players[1][1] <= 1 && self.check_step_to_goal() && self.players[0][1] != 8,
         }
     }
 
     pub fn current_player_wins_5x5(&self) -> bool {
         match self.to_move {
-            0 => self.players[0][1] >= 5 && self.check_step_to_goal() && self.players[1][1] != 0,
-            1 => self.players[1][1] <= 3 && self.check_step_to_goal() && self.players[0][1] != 8,
-            _ => false //cannot happen
+            Player1 => self.players[0][1] >= 5 && self.check_step_to_goal() && self.players[1][1] != 0,
+            Player2 => self.players[1][1] <= 3 && self.check_step_to_goal() && self.players[0][1] != 8,
         }
     }
 
